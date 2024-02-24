@@ -1,13 +1,21 @@
-let arrayOfTodos = [{'make dinner':0},{'prey':0},{'sleep':0}];
+let arrayOfTodos =[];
+if(arrayOfTodos.length === 0){
+    arrayOfTodos =  JSON.parse(localStorage.getItem('todosArray'));
+}
 let newTodo;
 let todos_delete_list_indexes = []; // to collect all checked boxes
+if(todos_delete_list_indexes.length === 0){
+    todos_delete_list_indexes = JSON.parse(localStorage.getItem('checkBoxesArray'));
+}
 const remove_checked_button = document.querySelector('.sBtn-div'); // the blue button
 const checkButton = document.querySelector('.js-check');
+const  processureBtn = document.querySelector('.fBtn');
 
 // display all todos in the array
 displayAll();
+checkPercentege();
+// update_button_width();
 function displayAll(){
-    document.getElementById("todos-list").innerHTML = '';
     arrayOfTodos.forEach(displayTodoOnScreen);
     deleteTodo();
     addLineToTodo();
@@ -16,15 +24,43 @@ function displayAll(){
 
 checkButton.addEventListener("click",()=>{
     console.log(`# of todos = ${arrayOfTodos.length}`);
-    console.log(`# of done todos  = ${todos_delete_list_indexes.length}`);
+    console.log(`# of done todos  = ${todos_delete_list_indexes.length}`);   
+    checkPercentege();
+    // update_button_width();
+    // alert(arrayOfTodos.length);
 });
 
+function checkPercentege(){
+     // Calculate the percentage
+     const percentage = (todos_delete_list_indexes.length/ arrayOfTodos.length) * 100;
+
+     if(todos_delete_list_indexes.length === 0){
+        processureBtn.style.background = `white`;
+     }
+     else{
+        // Set the background gradient dynamically
+        processureBtn.style.background = `linear-gradient(to right, rgb(151,228,74) ${percentage}%, white ${100 - percentage}%)`;
+        console.log(`percentege = ${percentage}`);
+        console.log(`opposite = ${100 -percentage}`);
+     }
+     processureBtn.innerHTML = `${todos_delete_list_indexes.length} of ${arrayOfTodos.length} taks done`;
+}
 // display new todo when add button is clicked
 document.getElementById("add-Button").onclick = function(){
     newTodo = document.getElementById("todo-text").value;// read todo
     arrayOfTodos.push(newTodo);
-    displayAll();
-
+    let valid = displayTodoOnScreen(newTodo, arrayOfTodos.length-1);
+    if(valid === 1){  
+        checkPercentege();
+    
+        // update_button_width();
+    }
+    localStorage.setItem('todosArray',JSON.stringify(arrayOfTodos));
+    localStorage.setItem('checkBoxesArray',JSON.stringify(todos_delete_list_indexes));
+    deleteTodo();
+    addLineToTodo();
+    editTodo();
+   
 }
 
 // add todo when enter is pushed
@@ -32,7 +68,17 @@ document.querySelector('.todo-input').addEventListener('keydown',(event)=>{
     if (event.key === 'Enter') {
         newTodo = document.getElementById("todo-text").value;
         arrayOfTodos.push(newTodo);
-        displayAll();   
+        let valid =  displayTodoOnScreen(newTodo, arrayOfTodos.length-1);
+        if(valid === 1){
+            // update_button_width(); 
+            checkPercentege();
+            localStorage.setItem('todosArray',JSON.stringify(arrayOfTodos));
+            localStorage.setItem('checkBoxesArray',JSON.stringify(todos_delete_list_indexes));
+        }
+           
+        deleteTodo();
+        addLineToTodo();
+        editTodo();
     }
 });
 
@@ -41,6 +87,8 @@ document.querySelector('.todo-input').addEventListener('keydown',(event)=>{
     if(newTodo.trim() !== ''){
         let newTodoDiv = document.createElement('div');// create a new div for the todo
            newTodoDiv.classList.add("todo-list-div");
+
+           newTodoDiv.id ='fulldiv' + index;
         
            // create a check box
            let checkbox = document.createElement('input');
@@ -109,10 +157,12 @@ document.querySelector('.todo-input').addEventListener('keydown',(event)=>{
            // apend the new todo to the main div
            document.getElementById("todos-list").appendChild(newTodoDiv);
            document.getElementById("todo-text").value = '';
+           return 1;
     }
     else{
         alert(`Todo can't be empty`);
     }
+    return 0;
  }
 
 
@@ -122,10 +172,18 @@ function addLineToTodo(){
     checkboxes.forEach((checkbox) => {
         checkbox.onclick = function(){
             const index = parseInt(this.getAttribute('id'));
-            todos_delete_list_indexes.push(index);
-            
+            // alert(index);
 
-
+            if(!todos_delete_list_indexes.includes(index))
+                todos_delete_list_indexes.push(index);
+            else{
+                const indexOfUnchecked2 = todos_delete_list_indexes.indexOf(index);
+                if (indexOfUnchecked2 !== -1) {
+                    todos_delete_list_indexes.splice(indexOfUnchecked2, 1);
+                }
+            }
+            console.log(todos_delete_list_indexes);
+        
             
             // add a line thorugh,get the para, add a class to it
 
@@ -134,25 +192,64 @@ function addLineToTodo(){
             let targetP = targetDiv.querySelector('p');
             //check if the element has a class named line-through, then remove it, else add it
             if (targetP.classList.contains('line-through')){
-                targetP.classList.remove('line-through')
+                targetP.classList.remove('line-through');
+                const indexOfUnchecked = todos_delete_list_indexes.indexOf(index);
+                if (indexOfUnchecked !== -1) {
+                    todos_delete_list_indexes.splice(indexOfUnchecked, 1);
+                }
+                
             }
             else{
-                 // Add a class to it
                  targetP.classList.add('line-through');
             }
+            checkPercentege();
+            // update_button_width();
+            localStorage.setItem('todosArray',JSON.stringify(arrayOfTodos));
+            localStorage.setItem('checkBoxesArray',JSON.stringify(todos_delete_list_indexes));
+
         }
+
     });
 }
 
 // when the blue button is clicked, remove all checked todos
 remove_checked_button.addEventListener('click', () => {
+    console.log(todos_delete_list_indexes.length);
+    // Sort the indexes in descending order before removing
     todos_delete_list_indexes.sort((a, b) => b - a);
-    todos_delete_list_indexes.forEach((id) => {
-        arrayOfTodos.splice(id, 1); // remove from todo list
-    });
-    displayAll(); // Render the page after all deletions
-    todos_delete_list_indexes = []; // Empty the array AFTER the loop
+    // Iterate over the indexes in reverse order to avoid issues with array modification
+    for (let i = todos_delete_list_indexes.length - 1; i >= 0; i--) {
+        const id = todos_delete_list_indexes[i];
+        // alert(`id in the loop = ${id}`);
+
+        // arrayOfTodos.splice(id, 1); // Remove from todo list
+        console.log(arrayOfTodos);
+
+        // Remove the corresponding div from the DOM
+        const divIdToDelete = 'fulldiv' + id;
+        const divToDelete = document.getElementById(divIdToDelete);
+        let textInsideP = document.querySelector(`#${divIdToDelete} #div${id} #p${id}`).textContent;
+        // delete the element from arrayOfTodos that contain this string
+        // Find the index of textInsideP in arrayOfTodos
+        const indexToRemove = arrayOfTodos.indexOf(textInsideP);
+
+        // Remove the element at indexToRemove from arrayOfTodos
+        if (indexToRemove !== -1) {
+            arrayOfTodos.splice(indexToRemove, 1);
+        }
+        // alert(textInsideP);
+        divToDelete.remove();
+
+        // Remove the id from todos_delete_list_indexes
+        todos_delete_list_indexes.splice(i, 1);
+
+        checkPercentege();
+        // update_button_width();
+    }
+    localStorage.setItem('todosArray',JSON.stringify(arrayOfTodos));
+    localStorage.setItem('checkBoxesArray',JSON.stringify(todos_delete_list_indexes));
 });
+
 
 
 // when x button is clicked,delete the todo
@@ -161,12 +258,37 @@ function deleteTodo() {
     deleteButtons.forEach((delete_button) => {
         delete_button.onclick = function() {
             const index = parseInt(this.getAttribute('id'));
-            // document.getElementById('p' + index).classList.add('lineThrough');
             document.getElementById('div' + index).classList.add('lineThrough');
-            arrayOfTodos.splice(index, 1);
-            todos_delete_list_indexes = []; // empty the array
-            displayAll(); //rendering
+
+
+              // Remove the corresponding div from the DOM
+        const divIdToDelete = 'fulldiv' + index;
+        let textInsideP = document.querySelector(`#${divIdToDelete} #div${index} #p${index}`).textContent;
+        // delete the element from arrayOfTodos that contain this string
+        // Find the index of textInsideP in arrayOfTodos
+        const indexToRemove = arrayOfTodos.indexOf(textInsideP);
+
+        // Remove the element at indexToRemove from arrayOfTodos
+        if (indexToRemove !== -1) {
+            arrayOfTodos.splice(indexToRemove, 1);
         }
+           
+            const indexOfUnchecked2 = todos_delete_list_indexes.indexOf(index);
+            if (indexOfUnchecked2 !== -1) {
+                todos_delete_list_indexes.splice(indexOfUnchecked2, 1);
+            }
+            checkPercentege();
+            // update_button_width();
+              // get the parent div which names is todos-list
+            let parent_div = document.getElementById('todos-list');
+            // get the div by it's id
+            let div_to_delete = document.getElementById('fulldiv'+index);
+
+            parent_div.removeChild(div_to_delete);
+            localStorage.setItem('todosArray',JSON.stringify(arrayOfTodos));
+            localStorage.setItem('checkBoxesArray',JSON.stringify(todos_delete_list_indexes));
+        }
+       
     });
 }
 
@@ -202,21 +324,34 @@ function editTodo(){
                         if(input_text.trim() === ''){
                             input_text = p_text;
                         }
+                        // put the new string on the array of todos
+                        let stringIndex = arrayOfTodos.indexOf(`${p_text}`);
                         // put it in the p elemnt
                         p_element.textContent = input_text;
-                       
-
                         // replace p with the input element
                         inputElement.parentNode.replaceChild(p_element, inputElement);
+                        arrayOfTodos[stringIndex] = `${input_text}`;
+                        
+                        localStorage.setItem('todosArray',JSON.stringify(arrayOfTodos));
+                        localStorage.setItem('checkBoxesArray',JSON.stringify(todos_delete_list_indexes));
                 }
             });
+          
         }
+       
     });
 }
 
 
-/*
-what is the next step?
-I need to fogure out how to compute the # of tasks done
- */
+// function update_button_width(){
+//     const max_width = 300;
+//     let percentage =0;
+//     if(arrayOfTodos.length !== 0 ){
+//          percentage = (todos_delete_list_indexes.length/ arrayOfTodos.length) * 100;
+//     }
+//     const js_button = document.querySelector('.fBtn');
+//     alert(js_button.innerHTML);
+//     js_button.style.flexBasis = `${(percentage / 100)*max_width}px`;
+
+// }
 
