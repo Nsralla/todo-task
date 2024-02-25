@@ -1,5 +1,5 @@
-let arrayOfTodos = JSON.parse(localStorage.getItem('todosArray7')) || [];
-let checkboxesArray = JSON.parse(localStorage.getItem('checkBoxesArray7')) || [];
+let arrayOfTodos = JSON.parse(localStorage.getItem('todosArray10')) || [];
+let checkboxesArray = JSON.parse(localStorage.getItem('checkBoxesArray10')) || [];
 let newTodo;
 const remove_checked_button = document.querySelector('.sBtn-div'); // the blue button
 const  processureBtn = document.querySelector('.fBtn');
@@ -42,8 +42,7 @@ document.getElementById("add-Button").onclick = function(){
         if(valid === 1){  
             checkPercentege();
         }
-        localStorage.setItem('todosArray7', JSON.stringify(arrayOfTodos));
-        localStorage.setItem('checkBoxesArray7', JSON.stringify(checkboxesArray));
+        updateLocalStorage();
     }
     deleteTodo();
     addLineToTodo();
@@ -63,8 +62,7 @@ document.querySelector('.todo-input').addEventListener('keydown',(event)=>{
             if(valid === 1){
                 checkPercentege();
             }
-            localStorage.setItem('todosArray7',JSON.stringify(arrayOfTodos));
-            localStorage.setItem('checkBoxesArray7',JSON.stringify(checkboxesArray));
+            updateLocalStorage();
             deleteTodo();
             addLineToTodo();
             editTodo();
@@ -204,8 +202,7 @@ function addLineToTodo(){
             }
          
             checkPercentege();
-            localStorage.setItem('todosArray7',JSON.stringify(arrayOfTodos));
-            localStorage.setItem('checkBoxesArray7',JSON.stringify(checkboxesArray));
+            updateLocalStorage();
 
         }
 
@@ -233,8 +230,7 @@ remove_checked_button.addEventListener('click', () => {
         divToDelete.remove();
         // Remove the id from checkboxesArray
         checkboxesArray.splice(i, 1);
-        localStorage.setItem('todosArray7',JSON.stringify(arrayOfTodos));
-        localStorage.setItem('checkBoxesArray7',JSON.stringify(checkboxesArray));
+        updateLocalStorage();
         checkPercentege();
     }
   
@@ -273,8 +269,7 @@ function deleteTodo() {
                 let div_to_delete = document.getElementById('fulldiv'+index);
 
                 parent_div.removeChild(div_to_delete);
-                localStorage.setItem('todosArray7',JSON.stringify(arrayOfTodos));
-                localStorage.setItem('checkBoxesArray7',JSON.stringify(checkboxesArray));
+                updateLocalStorage();
             }
        
     });
@@ -317,8 +312,7 @@ function editTodo(){
                         p_element.textContent = input_text;
                         // replace p with the input element
                         inputElement.parentNode.replaceChild(p_element, inputElement);
-                        localStorage.setItem('todosArray7',JSON.stringify(arrayOfTodos));
-                        localStorage.setItem('checkBoxesArray7',JSON.stringify(checkboxesArray));
+                        updateLocalStorage();
                 }
             });
           
@@ -348,4 +342,9 @@ function generateUUID() {
         uuid += Math.floor(Math.random() * 10); // Generates random integers from 0 to 9
     }
     return Number(uuid);
+}
+
+function updateLocalStorage(){
+    localStorage.setItem('todosArray10',JSON.stringify(arrayOfTodos));
+    localStorage.setItem('checkBoxesArray10',JSON.stringify(checkboxesArray));
 }
