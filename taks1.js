@@ -1,5 +1,5 @@
-let arrayOfTodos = JSON.parse(localStorage.getItem('todosArray7')) || [];
-let checkboxesArray = JSON.parse(localStorage.getItem('checkBoxesArray7')) || [];
+let arrayOfTodos = JSON.parse(localStorage.getItem('todosArray101')) || [];
+let checkboxesArray = JSON.parse(localStorage.getItem('checkBoxesArray101')) || [];
 let newTodo;
 const remove_checked_button = document.querySelector('.sBtn-div'); // the blue button
 const  processureBtn = document.querySelector('.fBtn');
@@ -17,6 +17,11 @@ function displayAll(){
 
 
 function checkPercentege(){
+    if(arrayOfTodos.length === 0){
+        processureBtn.innerHTML = 'No taks to show';
+        processureBtn.style.background = 'white';
+        return;
+    }
      // Calculate the percentage
      const percentage = (checkboxesArray.length/ arrayOfTodos.length) * 100;
 
@@ -24,26 +29,23 @@ function checkPercentege(){
         processureBtn.style.background = `white`;
      }
      else{
+
         // Set the background gradient dynamically
         processureBtn.style.background = `linear-gradient(to right, rgb(151,228,74) ${percentage}%, white ${100 - percentage}%)`;
-        console.log(`percentege = ${percentage}`);
-        console.log(`opposite = ${100 -percentage}`);
      }
      processureBtn.innerHTML = `${checkboxesArray.length} of ${arrayOfTodos.length} taks done`;
+    //  processureBtn.innerHTML = '';
 }
 // display new todo when add button is clicked
 document.getElementById("add-Button").onclick = function(){
     newTodo = document.getElementById("todo-text").value; // read todo
     if(newTodo !== ''){
-        let obj = {todo:newTodo, isDone:0};
+        let obj = {todo:newTodo, isDone:0,id:0};
+        obj.id = generateUUID(); 
         arrayOfTodos.push(obj);
-        let id = generateUUID(); // Generate unique ID using UUID
-        let valid = displayTodoOnScreen(obj, id);
-        if(valid === 1){  
-            checkPercentege();
-        }
-        localStorage.setItem('todosArray7', JSON.stringify(arrayOfTodos));
-        localStorage.setItem('checkBoxesArray7', JSON.stringify(checkboxesArray));
+        displayTodoOnScreen(obj);
+        checkPercentege();
+        updateLocalStorage();
     }
     deleteTodo();
     addLineToTodo();
@@ -55,16 +57,12 @@ document.querySelector('.todo-input').addEventListener('keydown',(event)=>{
     if (event.key === 'Enter') {
         newTodo = document.getElementById("todo-text").value;
         if(newTodo !== ''){
-            let obj = {todo:newTodo, isDone:0};
+            let obj = {todo:newTodo, isDone:0,id:0};
+            obj.id = generateUUID();
             arrayOfTodos.push(obj);
-            let id = generateUUID();
-          
-            let valid =  displayTodoOnScreen(obj, id);
-            if(valid === 1){
-                checkPercentege();
-            }
-            localStorage.setItem('todosArray7',JSON.stringify(arrayOfTodos));
-            localStorage.setItem('checkBoxesArray7',JSON.stringify(checkboxesArray));
+            displayTodoOnScreen(obj);
+            checkPercentege();
+            updateLocalStorage();
             deleteTodo();
             addLineToTodo();
             editTodo();
@@ -74,12 +72,12 @@ document.querySelector('.todo-input').addEventListener('keydown',(event)=>{
 });
 
 // display one todo
- function displayTodoOnScreen(newTodoObject,index){
+ function displayTodoOnScreen(newTodoObject){
     if(newTodoObject.todo.trim() !== ''){
            let newTodoDiv = document.createElement('div');// create a new div for the todo
            newTodoDiv.classList.add("todo-list-div");
 
-           newTodoDiv.id ='fulldiv' + index;
+           newTodoDiv.id ='fulldiv' + newTodoObject.id;
         
            // create a check box
            let checkbox = document.createElement('input');
@@ -87,7 +85,7 @@ document.querySelector('.todo-input').addEventListener('keydown',(event)=>{
            if(newTodoObject.isDone === 1){
             checkbox.checked = true;
            }
-           checkbox.id = index;
+           checkbox.id = newTodoObject.id;
            checkbox.classList.add('todo-checkbox');
 
            // create a div for the text
@@ -99,9 +97,9 @@ document.querySelector('.todo-input').addEventListener('keydown',(event)=>{
         }
 
 
-           paragraph.textContent = newTodoObject.todo.trim();
-           paragraph.id = 'p' +index;
-           textDiv.id ='div'+index;
+           paragraph.textContent = newTodoObject.todo;
+           paragraph.id = 'p' + newTodoObject.id;
+           textDiv.id ='div'+ newTodoObject.id;
            textDiv.appendChild(paragraph);
            textDiv.classList.add('p-div');
         
@@ -115,7 +113,7 @@ document.querySelector('.todo-input').addEventListener('keydown',(event)=>{
            // create the pen button and the image inside it
            let penButton = document.createElement('button');
            penButton.classList.add('pen-button');
-           penButton.id =index;
+           penButton.id =newTodoObject.id;
         
            let penImage = document.createElement('img');
            penImage.src = "/TASKS/images/pen-blue.svg";
@@ -133,7 +131,7 @@ document.querySelector('.todo-input').addEventListener('keydown',(event)=>{
            // create the delete button
            let deleteButton = document.createElement('button');
            deleteButton.classList.add('del-button');
-           deleteButton.id = index;
+           deleteButton.id = newTodoObject.id;
 
     
            // create the deleteImage
@@ -185,8 +183,8 @@ function addLineToTodo(){
             let targetDiv = document.getElementById('div' + index);
             // Assuming there is only one <p> element inside the div
             let targetP = targetDiv.querySelector('p');
-
-            let indexOfTodo = arrayOfTodos.findIndex(todoObj => todoObj.todo === targetP.textContent.trim());
+            let text = targetP.innerHTML;
+            let indexOfTodo = arrayOfTodos.findIndex(todoObj => todoObj.todo === text);
 
             //check if the element has a class named line-through, then remove it, else add it
             if (targetP.classList.contains('line-through')){
@@ -204,8 +202,7 @@ function addLineToTodo(){
             }
          
             checkPercentege();
-            localStorage.setItem('todosArray7',JSON.stringify(arrayOfTodos));
-            localStorage.setItem('checkBoxesArray7',JSON.stringify(checkboxesArray));
+            updateLocalStorage();
 
         }
 
@@ -233,8 +230,7 @@ remove_checked_button.addEventListener('click', () => {
         divToDelete.remove();
         // Remove the id from checkboxesArray
         checkboxesArray.splice(i, 1);
-        localStorage.setItem('todosArray7',JSON.stringify(arrayOfTodos));
-        localStorage.setItem('checkBoxesArray7',JSON.stringify(checkboxesArray));
+        updateLocalStorage();
         checkPercentege();
     }
   
@@ -248,7 +244,7 @@ function deleteTodo() {
     deleteButtons.forEach((delete_button) => {
         delete_button.onclick = function() {
             const index = parseInt(this.getAttribute('id'));
-            document.getElementById('div' + index).classList.add('lineThrough');
+            // document.getElementById('div' + index).classList.add('lineThrough');
 
               // Remove the corresponding div from the DOM
             const divIdToDelete = 'fulldiv' + index;
@@ -264,7 +260,6 @@ function deleteTodo() {
                 const indexOfUnchecked2 = checkboxesArray.indexOf(index);
                 if (indexOfUnchecked2 !== -1) {
                     checkboxesArray.splice(indexOfUnchecked2, 1);
-                    alert('yes it has been deleted');
                 }
                 checkPercentege();
                 // get the parent div which names is todos-list
@@ -273,8 +268,7 @@ function deleteTodo() {
                 let div_to_delete = document.getElementById('fulldiv'+index);
 
                 parent_div.removeChild(div_to_delete);
-                localStorage.setItem('todosArray7',JSON.stringify(arrayOfTodos));
-                localStorage.setItem('checkBoxesArray7',JSON.stringify(checkboxesArray));
+                updateLocalStorage();
             }
        
     });
@@ -292,10 +286,9 @@ function editTodo(){
             inputElement.classList.add('edited-text');
             inputElement.id = 'input-on-click';
             // put the text of p inside the input elemnt
-                // get the text of 
-                const p_element = document.getElementById('p'+index);
-                let p_text = document.getElementById('p'+index).textContent;
-                inputElement.value = p_text;
+            const p_element = document.getElementById('p'+index);
+            let p_text = document.getElementById('p'+index).textContent;
+            inputElement.value = p_text;
               
             // replace the p with the input
             p_element.parentNode.replaceChild( inputElement, p_element);
@@ -310,15 +303,16 @@ function editTodo(){
                         if(input_text.trim() === ''){
                             input_text = p_text;
                         }
+                        let text = p_text;
                         // put the new string on the array of todos
-                        let stringIndex = arrayOfTodos.findIndex(todoObj => todoObj.todo === p_text.trim());
+                        let stringIndex = arrayOfTodos.findIndex(todoObj => todoObj.todo === text);
                         arrayOfTodos[stringIndex].todo = `${input_text}`;
                         // put it in the p elemnt
                         p_element.textContent = input_text;
                         // replace p with the input element
                         inputElement.parentNode.replaceChild(p_element, inputElement);
-                        localStorage.setItem('todosArray7',JSON.stringify(arrayOfTodos));
-                        localStorage.setItem('checkBoxesArray7',JSON.stringify(checkboxesArray));
+                        updateLocalStorage();
+                       
                 }
             });
           
@@ -328,24 +322,17 @@ function editTodo(){
 }
 
 
-// function update_button_width(){
-//     const max_width = 300;
-//     let percentage =0;
-//     if(arrayOfTodos.length !== 0 ){
-//          percentage = (checkboxesArray.length/ arrayOfTodos.length) * 100;
-//     }
-//     const js_button = document.querySelector('.fBtn');
-//     alert(js_button.innerHTML);
-//     js_button.style.flexBasis = `${(percentage / 100)*max_width}px`;
-
-// }
-
 
 // Function to generate UUID
 function generateUUID() {
     let uuid = '';
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 5; i++) 
         uuid += Math.floor(Math.random() * 10); // Generates random integers from 0 to 9
-    }
     return Number(uuid);
+}
+
+
+function updateLocalStorage(){
+    localStorage.setItem('todosArray101',JSON.stringify(arrayOfTodos));
+    localStorage.setItem('checkBoxesArray101',JSON.stringify(checkboxesArray));
 }
